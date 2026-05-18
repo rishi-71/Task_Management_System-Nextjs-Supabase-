@@ -1,56 +1,51 @@
-'use client'
+import { createClient } from "../../utils/supabase/server";
+import { redirect } from "next/navigation";
 
-import { useEffect,useState } from "react";
-import { createClient } from "../../utils/supabase/client";
+export default async function Home(){
 
+  const supabase = await createClient();
 
-interface Task{
-  id : number;
-  created_at:string;
-  title:string;
-  is_completed:boolean;
-}
-export default function Home(){
-  const [tasks,setTasks]=useState<Task[]>([]);
-  const supabase = createClient();
+  const {data : {user}} = await supabase.auth.getUser();
 
-  useEffect(()=>{
-    const fetchTasks = async ()=>{
-      const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .order('created_at',{ascending:false});
+  if(!user){
+    redirect('/login');
+  }
 
-      if(error){
-        console.log("error fetching tasks: ",error);
-      }else{
-        setTasks(data || []);
-      }
-    };
-    fetchTasks();
-  },[])
+  const {data: tasks, error} = await supabase.from('tasks')
+  .select("*")
+  .order('created_at',{ascending: false});
 
-  return(
+  if(error){
+    console.log("error fetching tasks: ",error.message);
+  }
+
+  return (
     <main className="max-w-2xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">My Task Manager</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">My Task Manager</h1>
+        {/* Display the logged-in user's email */}
+        <span className="text-sm font-bold font-black bg-blue-50-200 px-3 py-1 rounded-full">
+          {user.email}
+        </span>
+      </div>
       
       <div className="space-y-4">
-        {tasks.map((task) => (
+        {/* We map over the tasks just like before, but no need for state! */}
+        {tasks?.map((task) => (
           <div key={task.id} className="p-4 border rounded-lg shadow-sm flex items-center justify-between">
             <span className={task.is_completed ? "line-through text-gray-500" : "font-medium"}>
               {task.title}
             </span>
             <input 
               type="checkbox" 
-              checked={task.is_completed} 
-              readOnly 
+              defaultChecked={task.is_completed} 
               className="w-5 h-5 cursor-pointer" 
             />
           </div>
         ))}
 
-        {tasks.length === 0 && (
-          <p className="text-gray-500 text-center mt-4">No tasks found. Add some in the Supabase dashboard!</p>
+        {(!tasks || tasks.length === 0) && (
+          <p className="text-gray-500 text-center mt-4">No tasks found. Time to add some!</p>
         )}
       </div>
     </main>
