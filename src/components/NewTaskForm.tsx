@@ -1,47 +1,37 @@
 'use client'
 
-import { useState } from "react"
-import { createClient } from "../utils/supabase/client"
-import { useRouter } from "next/navigation"
+
+import { useRef } from "react";
+import { addTask } from "@/actions/taskActions";
 
 export default function NewTaskForm(){
-    const [title,setTitle] = useState("");
-    const [loading,setLoading] = useState(false);
-
-    const supabase  = createClient();
-    const router = useRouter();
-
-    const handleSubmit = async (e:React.FormEvent) =>{
-        e.preventDefault();
-        if(!title.trim()) return;
-        setLoading(true);
-
-        const {error} = await supabase.from('tasks').insert([{title:title}]);
-
-        if(error){
-            console.error("Error adding task: ",error.message);
-        }else{
-            setTitle('');
-            router.refresh();
-        }
-        setLoading(false);
-    }
+  const formRef = useRef<HTMLFormElement>(null);
+    
     return (
-        <form onSubmit={handleSubmit} className="mb-6 flex gap-2">
-            <input type="text"
-            value={title} 
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder = "What needs to be done?"
-            className ="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-            />
-            <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-                {loading ? 'Adding...' : 'Add task'}
-            </button>
-        </form>
+        <>
+     {/* Instead of an onSubmit handler, we pass our Server Action to the 'action' attribute */}
+    <form 
+      action={async (formData) => {
+        await addTask(formData); // Call the server action
+        formRef.current?.reset(); // Clear the input field after it finishes
+      }} 
+      ref={formRef}
+      className="mb-6 flex gap-2"
+    >
+      <input
+        type="text"
+        name="title" // 🔥 IMPORTANT: The name attribute must match what we look for in the Server Action (formData.get('title'))
+        placeholder="What needs to be done?"
+        className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        required
+      />
+      <button
+        type="submit"
+        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        Add Task
+      </button>
+    </form>
+    </>
     );
 }
