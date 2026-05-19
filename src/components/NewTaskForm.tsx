@@ -1,11 +1,12 @@
 'use client'
 
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { addTask } from "@/actions/taskActions";
 
 export default function NewTaskForm(){
   const formRef = useRef<HTMLFormElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
     
     return (
         <>
@@ -25,11 +26,18 @@ export default function NewTaskForm(){
         className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         required
       />
+      <input 
+      type="file"
+      name = "image"
+      accept="image/*"
+      className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-700 hover:file:bg-blue-100 cursor-pointer"
+      />
       <button
         type="submit"
+        disabled={isUploading}
         className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
       >
-        Add Task
+       {isUploading ? 'Adding....' : 'Add Task'}
       </button>
     </form>
     </>
