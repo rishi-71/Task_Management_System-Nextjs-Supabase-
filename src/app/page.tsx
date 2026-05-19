@@ -1,5 +1,6 @@
-import { createClient } from "../../utils/supabase/server";
-import { redirect } from "next/navigation";
+import LogoutButton from "@/components/LogoutButton";
+import { createClient } from "../utils/supabase/server";
+//import { redirect } from "next/navigation";
 import NewTaskForm from "@/components/NewTaskForm";
 
 export default async function Home(){
@@ -8,9 +9,9 @@ export default async function Home(){
 
   const {data : {user}} = await supabase.auth.getUser();
 
-  if(!user){
-    redirect('/login');
-  }
+  // if(!user){
+  //   redirect('/login');
+  // }
 
   const {data: tasks, error} = await supabase.from('tasks')
   .select("*")
@@ -25,9 +26,12 @@ export default async function Home(){
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">My Task Manager</h1>
         {/* Display the logged-in user's email */}
-        <span className="text-sm font-bold font-black bg-blue-50-200 px-3 py-1 rounded-full">
-          {user.email}
-        </span>
+       <div className="flex items-center">
+          <span className="text-sm bg-gray-200 px-3 py-1 rounded-full">
+            {user?.email}
+          </span>
+          <LogoutButton />
+        </div>
       </div>
 
       <NewTaskForm/>
