@@ -18,12 +18,13 @@ export default function LogoutButton(){
         }
     }
     return (
-    <button
-      onClick={handleLogout}
-      className="ml-4 text-sm bg-red-100 text-red-600 px-4 py-1 rounded-full hover:bg-red-200 transition-colors"
-    >
-      Log Out
-    </button>
+  // Inside LogoutButton.tsx, replace the button class with:
+<button
+  onClick={handleLogout}
+  className="text-xs font-bold bg-red-500/10 text-red-400 px-4 py-1.5 rounded-full hover:bg-red-500 hover:text-white transition-all"
+>
+  Logout
+</button>
   );
 }
 

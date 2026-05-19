@@ -47,3 +47,42 @@ export async function addTask(formData : FormData){
 
     revalidatePath('/');
 }
+
+export async function toggleTask(taskId : number, currentStatus: boolean){
+    const supabase = await createClient();
+
+    const {data:{user}} = await supabase.auth.getUser();
+
+    if(!user) return;
+
+    const {error} = await supabase
+    .from('tasks')
+    .update({is_completed: !currentStatus})
+    .eq('id',taskId)
+    .eq('user_id',user.id);
+
+    if(error){
+        console.error("error updating task: ",error.message);
+        
+    }
+    revalidatePath("/");
+}
+
+export async function deleteTask(taskId : number){
+    const supabase = await createClient();
+
+    const {data: {user}} = await supabase.auth.getUser();
+
+    if(!user) return;
+
+    const {error} = await supabase
+    .from('tasks')
+    .delete()
+    .eq("id",taskId)
+    .eq('user_id',user.id);
+
+    if(error){
+        console.log("erorr deleting task: ",error.message)
+    }
+    revalidatePath('/');
+}

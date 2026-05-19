@@ -2,9 +2,9 @@ import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import NewTaskForm from '@/components/NewTaskForm'; 
 import LogoutButton from '@/components/LogoutButton'; 
-import Link from 'next/link'; // We use Next.js Links to change the URL without refreshing
+import Link from 'next/link'; 
+import TaskItem from '@/components/TaskItem';
 
-// 1. Next.js passes searchParams to our Server Component
 export default async function Home({
   searchParams,
 }: {
@@ -13,122 +13,108 @@ export default async function Home({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login');
-  }
+  if (!user) redirect('/login');
 
-  // 2. Await and extract the searchParams (Next.js 15 requirement)
   const resolvedParams = await searchParams;
-  
-  // 3. Set up our Filter and Page logic
   const currentFilter = typeof resolvedParams.filter === 'string' ? resolvedParams.filter : 'all';
   const currentPage = typeof resolvedParams.page === 'string' ? parseInt(resolvedParams.page) : 1;
   
-  // 4. Calculate our Pagination Range
   const tasksPerPage = 3; 
   const from = (currentPage - 1) * tasksPerPage;
   const to = from + tasksPerPage - 1;
 
-  // 5. Build the Supabase Query dynamically
   let query = supabase
     .from('tasks')
-    .select('*', { count: 'exact' }) // 'exact' tells Supabase to also return the total number of tasks!
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to);
 
-  // Apply the filter if it's not 'all'
-  if (currentFilter === 'completed') {
-    query = query.eq('is_completed', true);
-  } else if (currentFilter === 'active') {
-    query = query.eq('is_completed', false);
-  }
+  if (currentFilter === 'completed') query = query.eq('is_completed', true);
+  else if (currentFilter === 'active') query = query.eq('is_completed', false);
 
-  // Execute the query
   const { data: tasks, count, error } = await query;
+  if (error) console.error("Error fetching tasks:", error.message);
 
-  if (error) {
-    console.error("Error fetching tasks:", error.message);
-  }
-
-  // Calculate total pages for our Next/Prev buttons
   const totalTasks = count || 0;
   const totalPages = Math.ceil(totalTasks / tasksPerPage);
 
   return (
-    <main className="max-w-2xl mx-auto p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">My Task Manager</h1>
-        <div className="flex items-center">
-          <span className="text-sm bg-gray-200 px-3 py-1 rounded-full">{user?.email}</span>
-          <LogoutButton />
-        </div>
-      </div>
-      
-      <NewTaskForm />
-
-      {/* FILTERING UI */}
-      <div className="flex gap-4 mb-4 border-b pb-4">
-        <Link 
-          href={`/?filter=all&page=1`}
-          className={currentFilter === 'all' ? 'font-bold text-blue-600' : 'text-gray-500'}
-        >
-          All
-        </Link>
-        <Link 
-          href={`/?filter=active&page=1`}
-          className={currentFilter === 'active' ? 'font-bold text-blue-600' : 'text-gray-500'}
-        >
-          Active
-        </Link>
-        <Link 
-          href={`/?filter=completed&page=1`}
-          className={currentFilter === 'completed' ? 'font-bold text-blue-600' : 'text-gray-500'}
-        >
-          Completed
-        </Link>
-      </div>
-      
-      {/* TASK LIST */}
-      <div className="space-y-4 mb-6">
-        {tasks?.map((task) => (
-          <div key={task.id} className="p-4 border rounded-lg shadow-sm flex items-center justify-between">
-            <span className={task.is_completed ? "line-through text-gray-500" : "font-medium"}>
-              {task.title}
+    // 1. Sleek global dark background
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-500/30 font-sans pb-20">
+      <main className="max-w-3xl mx-auto p-6 md:p-12">
+        
+        {/* HEADER */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+            Task Master
+          </h1>
+          <div className="flex items-center gap-3 bg-zinc-900/80 p-1.5 pr-2 rounded-full border border-zinc-800 backdrop-blur-md">
+            <span className="text-xs font-medium text-zinc-400 pl-3">
+              {user?.email}
             </span>
-            <input 
-              type="checkbox" 
-              defaultChecked={task.is_completed} 
-              className="w-5 h-5 cursor-pointer" 
-              // Note: We haven't built the update functionality yet!
-            />
+            <LogoutButton />
           </div>
-        ))}
+        </div>
+        
+        {/* ADD TASK FORM */}
+        <NewTaskForm />
 
-        {(!tasks || tasks.length === 0) && (
-          <p className="text-gray-500 text-center mt-4">No tasks found for this filter.</p>
-        )}
-      </div>
-
-      {/* PAGINATION UI */}
-      {totalPages > 1 && (
-        <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+        {/* MODERN PILL FILTERS */}
+        <div className="flex gap-2 mb-8 bg-zinc-900/50 p-1.5 rounded-2xl w-fit border border-zinc-800">
           <Link 
-            href={`/?filter=${currentFilter}&page=${currentPage - 1}`}
-            className={`px-4 py-2 bg-white border rounded shadow-sm ${currentPage <= 1 ? 'pointer-events-none opacity-50' : 'hover:bg-gray-100'}`}
+            href={`/?filter=all&page=1`}
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${currentFilter === 'all' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
           >
-            Previous
+            All
           </Link>
-          <span className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
-          </span>
           <Link 
-            href={`/?filter=${currentFilter}&page=${currentPage + 1}`}
-            className={`px-4 py-2 bg-white border rounded shadow-sm ${currentPage >= totalPages ? 'pointer-events-none opacity-50' : 'hover:bg-gray-100'}`}
+            href={`/?filter=active&page=1`}
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${currentFilter === 'active' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
           >
-            Next
+            Active
+          </Link>
+          <Link 
+            href={`/?filter=completed&page=1`}
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${currentFilter === 'completed' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+          >
+            Completed
           </Link>
         </div>
-      )}
-    </main>
+        
+        {/* TASK LIST */}
+        <div className="space-y-3 mb-10">
+          {tasks?.map((task) => (
+            <TaskItem key={task.id} task={task} />
+          ))}
+
+          {(!tasks || tasks.length === 0) && (
+            <div className="text-center py-20 border-2 border-dashed border-zinc-800 rounded-3xl text-zinc-500">
+              <p className="text-lg">No tasks found. Time to chill! ☕</p>
+            </div>
+          )}
+        </div>
+
+        {/* DARK THEME PAGINATION */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center bg-zinc-900/50 border border-zinc-800 p-2 rounded-2xl backdrop-blur-sm">
+            <Link 
+              href={`/?filter=${currentFilter}&page=${currentPage - 1}`}
+              className={`px-5 py-2.5 rounded-xl font-medium transition-all ${currentPage <= 1 ? 'pointer-events-none opacity-40 text-zinc-500' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'}`}
+            >
+              ← Prev
+            </Link>
+            <span className="text-sm font-medium text-zinc-400">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Link 
+              href={`/?filter=${currentFilter}&page=${currentPage + 1}`}
+              className={`px-5 py-2.5 rounded-xl font-medium transition-all ${currentPage >= totalPages ? 'pointer-events-none opacity-40 text-zinc-500' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'}`}
+            >
+              Next →
+            </Link>
+          </div>
+        )}
+      </main>
+    </div>
   );
-}              
+}
