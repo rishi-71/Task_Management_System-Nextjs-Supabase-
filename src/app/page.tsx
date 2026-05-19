@@ -1,5 +1,6 @@
 import { createClient } from "../../utils/supabase/server";
 import { redirect } from "next/navigation";
+import NewTaskForm from "@/components/NewTaskForm";
 
 export default async function Home(){
 
@@ -28,6 +29,8 @@ export default async function Home(){
           {user.email}
         </span>
       </div>
+
+      <NewTaskForm/>
       
       <div className="space-y-4">
         {/* We map over the tasks just like before, but no need for state! */}
