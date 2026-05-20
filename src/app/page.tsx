@@ -15,6 +15,15 @@ export default async function Home({
 
   if (!user) redirect('/login');
 
+  //fetching the user's role
+  const {data:roleData} = await supabase
+  .from('user_roles')
+  .select('role')
+  .eq('user_id',user.id)
+  .single() // because user has only one role
+
+  const userRole = roleData?.role || 'user';
+
   const resolvedParams = await searchParams;
   const currentFilter = typeof resolvedParams.filter === 'string' ? resolvedParams.filter : 'all';
   const currentPage = typeof resolvedParams.page === 'string' ? parseInt(resolvedParams.page) : 1;
@@ -49,10 +58,22 @@ export default async function Home({
             Task Master
           </h1>
           <div className="flex items-center gap-3 bg-zinc-900/80 p-1.5 pr-2 rounded-full border border-zinc-800 backdrop-blur-md">
-            <span className="text-xs font-medium text-zinc-400 pl-3">
+            
+            <div className="flex items-center gap-3 bg-zinc-900/80 p-1.5 pr-2 rounded-full border border-zinc-800 backdrop-blur-md">
+            
+            {userRole === 'admin' && (
+              <Link href="/admin" className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-full border border-emerald-500/30 ml-1 transition-all cursor-pointer">
+                ADMIN PANEL ⚙️
+              </Link>
+            )}
+
+            <span className="text-xs font-medium text-zinc-400 pl-3 border-l border-zinc-700">
               {user?.email}
             </span>
             <LogoutButton />
+          </div>
+
+
           </div>
         </div>
         
