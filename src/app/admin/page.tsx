@@ -79,6 +79,12 @@ if (roleData?.role !== 'admin') {
                 
                 <div className="col-span-3 flex justify-end gap-2">
                   {/* We will add the 'View Tasks' button here in the next step! */}
+                  <Link 
+                    href={`/admin/users/${u.id}`}
+                    className="text-xs font-bold bg-blue-500/10 text-blue-400 px-3 py-1.5 rounded-lg hover:bg-blue-500 hover:text-white transition-all"
+                  >
+                    View Tasks
+                  </Link>
                   <form action={async () => {
                     'use server';
                     await deleteUserAccount(u.id);
